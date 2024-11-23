@@ -48,7 +48,7 @@ internal class TokenValueToDecimalUiStringMapperImpl @Inject constructor() :
     ): String {
         val decimalFormat = DecimalFormat(
             "#,###.${"#".repeat(decimalPoints)}",
-            DecimalFormatSymbols(Locale.getDefault())
+            DecimalFormatSymbols(Locale.US)
         )
         return decimalFormat.format(
             decimal
