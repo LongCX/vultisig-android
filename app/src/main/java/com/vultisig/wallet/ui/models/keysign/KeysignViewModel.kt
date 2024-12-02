@@ -32,6 +32,7 @@ import com.vultisig.wallet.data.models.SignedTransactionResult
 import com.vultisig.wallet.data.models.TssKeyType
 import com.vultisig.wallet.data.models.Vault
 import com.vultisig.wallet.data.models.coinType
+import com.vultisig.wallet.data.models.payload.BlockChainSpecific
 import com.vultisig.wallet.data.models.payload.KeysignPayload
 import com.vultisig.wallet.data.models.payload.SwapPayload
 import com.vultisig.wallet.data.repositories.ExplorerLinkRepository
@@ -166,12 +167,27 @@ internal class KeysignViewModel(
                 signMessageWithRetry(this.tssInstance!!, message, 1)
             }
             broadcastTransaction()
+            checkThorChainTxResult()
             currentState.value = KeysignState.KeysignFinished
             isNavigateToHome = true
             this._messagePuller?.stop()
         } catch (e: Exception) {
             Timber.e(e)
             currentState.value = KeysignState.Error( e.message ?: "Unknown error")
+        }
+    }
+
+    private suspend fun checkThorChainTxResult() {
+        val chainSpecific = keysignPayload.blockChainSpecific
+        if (chainSpecific !is BlockChainSpecific.THORChain)
+            return
+        if (!chainSpecific.isDeposit)
+            return
+        val transactionDetail = thorChainApi.getTransactionDetail(txHash.value)
+
+        // https://docs.cosmos.network/v0.46/building-modules/errors.html#registration
+        if (transactionDetail.code != null && transactionDetail.codeSpace != null) {
+            throw Exception(transactionDetail.rawLog)
         }
     }
 
@@ -248,7 +264,8 @@ internal class KeysignViewModel(
                 solanaApi.broadcastTransaction(signedTransaction.rawTransaction)
             }
 
-            Chain.GaiaChain, Chain.Kujira, Chain.Dydx, Chain.Osmosis, Chain.Terra, Chain.TerraClassic -> {
+            Chain.GaiaChain, Chain.Kujira, Chain.Dydx, Chain.Osmosis, Chain.Terra,
+            Chain.TerraClassic, Chain.Noble -> {
                 val cosmosApi = cosmosApiFactory.createCosmosApi(keysignPayload.coin.chain)
                 cosmosApi.broadcastTransaction(signedTransaction.rawTransaction)
             }
@@ -339,7 +356,7 @@ internal class KeysignViewModel(
             }
 
             Chain.GaiaChain, Chain.Kujira, Chain.Dydx, Chain.Osmosis,
-            Chain.TerraClassic, Chain.Terra -> {
+            Chain.TerraClassic, Chain.Terra, Chain.Noble -> {
                 return CosmosHelper(
                     coinType = chain.coinType,
                     denom = chain.feeUnit,

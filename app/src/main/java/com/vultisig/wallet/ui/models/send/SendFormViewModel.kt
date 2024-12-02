@@ -8,12 +8,14 @@ import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.vultisig.wallet.R
+import com.vultisig.wallet.data.chains.helpers.PolkadotHelper
 import com.vultisig.wallet.data.models.Account
 import com.vultisig.wallet.data.models.Address
 import com.vultisig.wallet.data.models.AddressBookEntry
 import com.vultisig.wallet.data.models.Chain
 import com.vultisig.wallet.data.models.ChainId
 import com.vultisig.wallet.data.models.Coin
+import com.vultisig.wallet.data.models.Coins
 import com.vultisig.wallet.data.models.FiatValue
 import com.vultisig.wallet.data.models.GasFeeParams
 import com.vultisig.wallet.data.models.ImageModel
@@ -88,11 +90,13 @@ internal data class SendFormUiModel(
     val fiatCurrency: String = "",
     val gasFee: UiText = UiText.Empty,
     val totalGas: UiText = UiText.Empty,
+    val gasTokenBalance: UiText? = null,
     val estimatedFee: UiText = UiText.Empty,
     val errorText: UiText? = null,
     val showGasFee: Boolean = true,
     val dstAddressError: UiText? = null,
     val tokenAmountError: UiText? = null,
+    val reapingError: UiText? = null,
     val hasMemo: Boolean = false,
     val showGasSettings: Boolean = false,
     val specific: BlockChainSpecificAndUtxo? = null,
@@ -126,7 +130,7 @@ internal class SendFormViewModel @Inject constructor(
     private val navigator: Navigator<Destination>,
     private val sendNavigator: Navigator<SendDst>,
     private val accountToTokenBalanceUiModelMapper: AccountToTokenBalanceUiModelMapper,
-    private val mapGasFeeToString: TokenValueToStringWithUnitMapper,
+    private val mapTokenValueToString: TokenValueToStringWithUnitMapper,
     private val accountsRepository: AccountsRepository,
     appCurrencyRepository: AppCurrencyRepository,
     private val chainAccountAddressRepository: ChainAccountAddressRepository,
@@ -191,8 +195,10 @@ internal class SendFormViewModel @Inject constructor(
         collectSelectedAccount()
         collectAmountChanges()
         calculateGasFees()
+        calculateGasTokenBalance()
         calculateSpecific()
         collectAdvanceGasUi()
+        collectAmountChecks()
     }
 
     fun loadData(
@@ -436,6 +442,8 @@ internal class SendFormViewModel @Inject constructor(
                         srcAddress,
                         selectedToken,
                         gasFee,
+                        memo = memoFieldState.text.toString().takeIf { it.isNotEmpty() },
+                        tokenAmountValue = tokenAmountInt,
                         isSwap = false,
                         isMaxAmountEnabled = isMaxAmount,
                         isDeposit = false,
@@ -606,6 +614,7 @@ internal class SendFormViewModel @Inject constructor(
     private fun selectToken(token: Coin) {
         Timber.d("selectToken(token = $token)")
 
+        lastTokenValueUserInput = ""
         selectedToken.value = token
     }
 
@@ -681,6 +690,40 @@ internal class SendFormViewModel @Inject constructor(
         // if user selected none, or nothing was found, select the first token
         return searchByChainResult
             ?: accounts.firstOrNull()?.token
+    }
+
+    private fun calculateGasTokenBalance() {
+        viewModelScope.launch {
+            selectedToken
+                .filterNotNull()
+                .map {
+                   if (it.isNativeToken) {
+                        null
+                    } else {
+                        accounts.value.find { account ->
+                            account.token.isNativeToken &&
+                                    account.token.chain == it.chain
+                        }?.tokenValue
+                    }
+                }
+                .collect { gasTokenBalance ->
+                    if (gasTokenBalance == null) {
+                        uiState.update {
+                            it.copy(gasTokenBalance = null)
+                        }
+                    } else {
+                        uiState.update {
+                            it.copy(
+                                gasTokenBalance = UiText.DynamicString(
+                                    mapTokenValueToString(
+                                        gasTokenBalance
+                                    )
+                                )
+                            )
+                        }
+                    }
+                }
+        }
     }
 
     private fun calculateGasFees() {
@@ -786,7 +829,6 @@ internal class SendFormViewModel @Inject constructor(
                 accounts,
             ) { token, accounts ->
                 val address = token.address
-                val showGasFee = !token.allowZeroGas()
                 val hasMemo = token.isNativeToken
 
                 val uiModel = accountToTokenBalanceUiModelMapper.map(SendSrc(
@@ -807,7 +849,6 @@ internal class SendFormViewModel @Inject constructor(
                     it.copy(
                         from = address,
                         selectedCoin = uiModel,
-                        showGasFee = showGasFee,
                         hasMemo = hasMemo,
                     )
                 }
@@ -818,13 +859,14 @@ internal class SendFormViewModel @Inject constructor(
     private fun collectAmountChanges() {
         viewModelScope.launch {
             combine(
+                selectedToken.filterNotNull(),
                 tokenAmountFieldState.textAsFlow(),
                 fiatAmountFieldState.textAsFlow(),
-            ) { tokenFieldValue, fiatFieldValue ->
+            ) { selectedToken, tokenFieldValue, fiatFieldValue ->
                 val tokenString = tokenFieldValue.toString()
                 val fiatString = fiatFieldValue.toString()
                 if (lastTokenValueUserInput != tokenString) {
-                    val fiatValue = convertValue(tokenString) { value, price, token ->
+                    val fiatValue = convertValue(tokenString, selectedToken) { value, price, token ->
                         value.multiply(price)
                     } ?: return@combine
 
@@ -833,7 +875,7 @@ internal class SendFormViewModel @Inject constructor(
 
                     fiatAmountFieldState.setTextAndPlaceCursorAtEnd(fiatValue)
                 } else if (lastFiatValueUserInput != fiatString) {
-                    val tokenValue = convertValue(fiatString) { value, price, token ->
+                    val tokenValue = convertValue(fiatString, selectedToken) { value, price, token ->
                         value.divide(price, token.decimal, RoundingMode.HALF_UP)
                     } ?: return@combine
 
@@ -846,8 +888,48 @@ internal class SendFormViewModel @Inject constructor(
         }
     }
 
+    private fun collectAmountChecks() {
+        viewModelScope.launch {
+            combine(
+                selectedToken.filterNotNull(),
+                tokenAmountFieldState.textAsFlow(),
+                gasFee.filterNotNull(),
+            ) { selectedToken, tokenAmount, gasFee ->
+                val selectedAccount = selectedAccount
+                if (selectedAccount != null &&
+                    selectedToken.chain == Chain.Polkadot &&
+                    selectedToken.ticker == Coins.polkadot.ticker
+                ) {
+                    val balance = selectedAccount.tokenValue
+                        ?.value
+                        ?: BigInteger.ZERO
+                    val tokenAmountInt = tokenAmount.toString()
+                        .toBigDecimalOrNull()
+                        ?.movePointRight(selectedToken.decimal)
+                        ?.toBigInteger()
+                        ?: BigInteger.ZERO
+
+                    if (balance - (gasFee.value + tokenAmountInt) <
+                        PolkadotHelper.DEFAULT_EXISTENTIAL_DEPOSIT.toBigInteger()
+                    ) {
+                        uiState.update {
+                            it.copy(
+                                reapingError = UiText.StringResource(R.string.send_form_polka_reaping_warning)
+                            )
+                        }
+                    } else {
+                        uiState.update {
+                            it.copy(reapingError = null)
+                        }
+                    }
+                }
+            }.collect()
+        }
+    }
+
     private suspend fun convertValue(
         value: String,
+        token: Coin?,
         transform: (
             value: BigDecimal,
             price: BigDecimal,
@@ -857,7 +939,7 @@ internal class SendFormViewModel @Inject constructor(
         val decimalValue = value.toBigDecimalOrNull()
 
         return if (decimalValue != null) {
-            val selectedToken = selectedTokenValue
+            val selectedToken = token
                 ?: return null
 
             val price = try {
