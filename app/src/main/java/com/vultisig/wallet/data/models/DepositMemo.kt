@@ -122,8 +122,7 @@ internal interface DepositMemo {
             append(basisPoints)
             append(":")
             append(THORChainSwaps.AFFILIATE_FEE_ADDRESS)
-            append(":")
-            append(THORChainSwaps.AFFILIATE_FEE_RATE)
+            append(":0")
         }
 
     }
