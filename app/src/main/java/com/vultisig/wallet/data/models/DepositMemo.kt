@@ -121,8 +121,9 @@ internal interface DepositMemo {
             append("POOL-:")
             append(basisPoints)
             append(":")
-            append(THORChainSwaps.AFFILIATE_FEE_ADDRESS)
-            append(":0")
+            append("dx")
+            append(":")
+            append("0")
         }
 
     }
