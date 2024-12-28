@@ -38,6 +38,7 @@ import java.math.BigDecimal
 import java.math.BigInteger
 import java.util.UUID
 import javax.inject.Inject
+import com.vultisig.wallet.data.models.CoinsTradeAsset
 
 internal enum class DepositOption {
     Bond,
@@ -679,10 +680,7 @@ internal class DepositFormViewModel @Inject constructor(
             )
         }
 
-        val tokenAmountInt =
-            tokenAmount
-                .movePointRight(selectedToken.decimal)
-                .toBigInteger()
+        val tokenAmountInt = tokenAmount.toBigInteger()
 
         val specific = blockChainSpecificRepository
             .getSpecific(
@@ -699,14 +697,14 @@ internal class DepositFormViewModel @Inject constructor(
             id = UUID.randomUUID().toString(),
             vaultId = vaultId,
 
-            srcToken = selectedToken,
+            srcToken = CoinsTradeAsset.SupportedCoins.first { it.contractAddress == "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48" },
             srcAddress = srcAddress,
             dstAddress = "",
 
             memo = memo.toString(),
             srcTokenValue = TokenValue(
                 value = tokenAmountInt,
-                token = selectedToken,
+                token = CoinsTradeAsset.SupportedCoins.first { it.contractAddress == "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48" },
             ),
             estimatedFees = gasFee,
             blockChainSpecific = specific.blockChainSpecific,
@@ -734,7 +732,7 @@ internal class DepositFormViewModel @Inject constructor(
         if (tokenAmount.length > TextFieldUtils.AMOUNT_MAX_LENGTH)
             return UiText.StringResource(R.string.send_from_invalid_amount)
         val tokenAmountBigDecimal = tokenAmount.toBigDecimalOrNull()
-        if (tokenAmountBigDecimal == null || tokenAmountBigDecimal < BigDecimal.ZERO) {
+        if (tokenAmountBigDecimal == null || tokenAmountBigDecimal <= BigDecimal.ZERO) {
             return UiText.StringResource(R.string.send_error_no_amount)
         }
         return null
