@@ -18,7 +18,7 @@ dependencyResolutionManagement {
         google()
         mavenCentral()
         maven {
-            url = uri("https://maven.pkg.github.com/trustwallet/wallet-core")
+            url = uri("https://maven.pkg.github.com/LongCX/wallet-core")
             credentials {
                 username = System.getenv("GITHUB_USER")
                 password = System.getenv("GITHUB_TOKEN")
