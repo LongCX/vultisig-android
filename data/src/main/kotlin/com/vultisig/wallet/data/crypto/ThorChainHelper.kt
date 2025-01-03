@@ -105,9 +105,9 @@ class ThorChainHelper(
                 .setAsset(
                     Cosmos.THORChainAsset.newBuilder()
                         .setChain(chainName)
-                        .setSymbol(ticker)
-                        .setTicker(ticker)
-                        .setSynth(false)
+                        .setSymbol("USDC-0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48")
+                        .setTicker("USDC")
+                        .setTrade(true)
                         .build()
                 )
                 .let {
