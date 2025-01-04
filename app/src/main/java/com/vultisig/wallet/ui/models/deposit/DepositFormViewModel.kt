@@ -8,6 +8,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.vultisig.wallet.R
 import com.vultisig.wallet.data.models.Chain
+import com.vultisig.wallet.data.models.Coin
+import com.vultisig.wallet.data.models.Coins
 import com.vultisig.wallet.data.models.DepositMemo
 import com.vultisig.wallet.data.models.DepositMemo.Bond
 import com.vultisig.wallet.data.models.DepositMemo.Unbond
@@ -48,6 +50,13 @@ internal enum class DepositOption {
     Custom,
 }
 
+internal enum class AssetOption {
+    ETHUSDC,
+    BTC,
+    AVAXUSDC,
+    RUNE,
+}
+
 internal enum class DepositChain {
     Maya, Thor;
 
@@ -65,6 +74,8 @@ internal data class DepositFormUiModel(
     val depositMessage: UiText = UiText.Empty,
     val depositOption: DepositOption = DepositOption.Bond,
     val depositOptions: List<DepositOption> = emptyList(),
+    val assetOption: AssetOption = AssetOption.RUNE,
+    val assetOptions: List<AssetOption> = emptyList(),
     val depositChain: DepositChain? = null,
     val errorText: UiText? = null,
     val tokenAmountError: UiText? = null,
@@ -125,12 +136,14 @@ internal class DepositFormViewModel @Inject constructor(
             DepositOption.entries.filter {
                 it != DepositOption.DepositPool && it != DepositOption.WithdrawPool
             }
+        val assetOptions = AssetOption.entries
 
         state.update {
             it.copy(
                 depositMessage = R.string.deposit_message_deposit_title.asUiText(chain.raw),
                 depositOptions = depositOptions,
-                depositChain = DepositChain.from(chain)
+                depositChain = DepositChain.from(chain),
+                assetOptions = assetOptions,
             )
         }
     }
@@ -139,6 +152,13 @@ internal class DepositFormViewModel @Inject constructor(
         resetTextFields()
         state.update {
             it.copy(depositOption = option)
+        }
+    }
+
+    fun selectAssetOption(option: AssetOption) {
+        resetTextFields()
+        state.update {
+            it.copy(assetOption = option)
         }
     }
 
@@ -222,12 +242,13 @@ internal class DepositFormViewModel @Inject constructor(
             try {
                 isLoading = true
                 val depositOption = state.value.depositOption
+                val assetOption = state.value.assetOption.toString()
 
                 val transaction = when (depositOption) {
                     DepositOption.Bond -> createBondTransaction()
                     DepositOption.Unbond -> createUnbondTransaction()
                     DepositOption.Leave -> createLeaveTransaction()
-                    DepositOption.Custom -> createCustomTransaction()
+                    DepositOption.Custom -> createCustomTransaction(assetOption)
                     DepositOption.DepositPool -> createDepositPoolTransaction()
                     DepositOption.WithdrawPool -> createWithdrawPoolTransaction()
                 }
@@ -650,7 +671,7 @@ internal class DepositFormViewModel @Inject constructor(
         )
     }
 
-    private suspend fun createCustomTransaction(): DepositTransaction {
+    private suspend fun createCustomTransaction(assetOption: String): DepositTransaction {
         val chain = chain
             ?: throw InvalidTransactionDataException(
                 UiText.StringResource(R.string.send_error_no_address)
@@ -679,9 +700,19 @@ internal class DepositFormViewModel @Inject constructor(
             )
         }
 
+        val assetOptionForTrade = assetOption
+        var assetTrade: Coin
+
+        when (assetOptionForTrade) {
+            "ETHUSDC" -> assetTrade = Coins.SupportedCoins.first { it.contractAddress == "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48" }
+            "BTC" -> assetTrade = Coins.SupportedCoins.first { it.chain == Chain.Bitcoin }
+            "AVAXUSDC" -> assetTrade = Coins.SupportedCoins.first { it.contractAddress == "0xb97ef9ef8734c71904d8002f8b6bc66dd9c48a6e" }
+            else -> assetTrade = Coins.SupportedCoins.first { it.chain == Chain.ThorChain }
+        }
+
         val tokenAmountInt =
             tokenAmount
-                .movePointRight(selectedToken.decimal)
+                .movePointRight(assetTrade.decimal)
                 .toBigInteger()
 
         val specific = blockChainSpecificRepository
@@ -700,13 +731,14 @@ internal class DepositFormViewModel @Inject constructor(
             vaultId = vaultId,
 
             srcToken = selectedToken,
+            srcTokenTrade = assetTrade,
             srcAddress = srcAddress,
             dstAddress = "",
 
             memo = memo.toString(),
             srcTokenValue = TokenValue(
                 value = tokenAmountInt,
-                token = selectedToken,
+                token = assetTrade,
             ),
             estimatedFees = gasFee,
             blockChainSpecific = specific.blockChainSpecific,

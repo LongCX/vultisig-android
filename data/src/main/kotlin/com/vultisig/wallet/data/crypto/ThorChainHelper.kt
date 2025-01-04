@@ -6,6 +6,7 @@ import com.vultisig.wallet.data.models.CosmoSignature
 import com.vultisig.wallet.data.models.SignedTransactionResult
 import com.vultisig.wallet.data.models.payload.BlockChainSpecific
 import com.vultisig.wallet.data.models.payload.KeysignPayload
+import com.vultisig.wallet.data.models.swapAssetName
 import com.vultisig.wallet.data.models.transactionHash
 import com.vultisig.wallet.data.tss.getSignatureWithRecoveryID
 import com.vultisig.wallet.data.utils.Numeric
@@ -101,13 +102,26 @@ class ThorChainHelper(
         val memo = keysignPayload.memo
 
         val msgSend = if (isDeposit) {
+            val symbolCoin = if (keysignPayload.coinTrade?.contractAddress.isNullOrEmpty()) {
+                keysignPayload.coinTrade?.ticker
+            } else {
+                "${keysignPayload.coinTrade?.ticker}-${keysignPayload.coinTrade?.contractAddress?.takeLast(6)?.uppercase()}"
+            }
             val coin = Cosmos.THORChainCoin.newBuilder()
                 .setAsset(
                     Cosmos.THORChainAsset.newBuilder()
-                        .setChain("ETH")
-                        .setSymbol("USDC-0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48")
-                        .setTicker("USDC")
-                        .setTrade(true)
+                        .apply {
+                            if (keysignPayload.coinTrade == null || keysignPayload.coinTrade.ticker == "RUNE" || !isValidMemoTradeAsset(keysignPayload.memo)) {
+                                setChain(chainName)
+                                setSymbol(ticker)
+                                setTicker(ticker)
+                            } else {
+                                setChain(keysignPayload.coinTrade.chain.swapAssetName())
+                                setSymbol(symbolCoin)
+                                setTicker(keysignPayload.coinTrade.ticker)
+                                setTrade(true)
+                            }
+                        }
                         .build()
                 )
                 .let {
@@ -214,6 +228,13 @@ class ThorChainHelper(
             output.serialized,
             cosmosSig.transactionHash(),
         )
+    }
+
+    fun isValidMemoTradeAsset(input: String?): Boolean {
+        val keywords = listOf("POOL", "LEAVE", "UNBOND", "BOND")
+        return input?.let {
+            keywords.none { keyword -> it.contains(keyword, ignoreCase = true) }
+        } ?: false
     }
 
 }

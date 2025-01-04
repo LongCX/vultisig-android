@@ -32,6 +32,7 @@ import com.vultisig.wallet.ui.components.UiSpacer
 import com.vultisig.wallet.ui.components.library.form.FormCard
 import com.vultisig.wallet.ui.components.library.form.FormSelection
 import com.vultisig.wallet.ui.components.library.form.FormTextFieldCard
+import com.vultisig.wallet.ui.models.deposit.AssetOption
 import com.vultisig.wallet.ui.models.deposit.DepositChain
 import com.vultisig.wallet.ui.models.deposit.DepositFormUiModel
 import com.vultisig.wallet.ui.models.deposit.DepositFormViewModel
@@ -67,6 +68,7 @@ internal fun DepositFormScreen(
         onProviderLostFocus = model::validateProvider,
         onOperatorFeeLostFocus = model::validateOperatorFee,
         onSelectDepositOption = model::selectDepositOption,
+        onSelectAssetOption = model::selectAssetOption,
         onCustomMemoLostFocus = model::validateCustomMemo,
         basisPointsFieldState = model.basisPointsFieldState,
         onBasisPointsLostFocus = model::validateBasisPoints,
@@ -98,6 +100,7 @@ internal fun DepositFormScreen(
     basisPointsFieldState: TextFieldState,
     onBasisPointsLostFocus: () -> Unit = {},
     onSelectDepositOption: (DepositOption) -> Unit = {},
+    onSelectAssetOption: (AssetOption) -> Unit = {},
     onDismissError: () -> Unit = {},
     onSetNodeAddress: (String) -> Unit = {},
     onSetProvider: (String) -> Unit = {},
@@ -183,6 +186,19 @@ internal fun DepositFormScreen(
                     if (depositOption != DepositOption.Leave && depositChain == DepositChain.Thor ||
                         depositOption == DepositOption.Custom && depositChain == DepositChain.Maya
                     ) {
+                        if (depositOption == DepositOption.Custom) {
+                            FormSelection(
+                                selected = state.assetOption,
+                                options = state.assetOptions,
+                                mapTypeToString = {
+                                    when (it) {
+                                        AssetOption.RUNE -> "THOR.RUNE (Not using trade asset)"
+                                        else -> it.name
+                                    }
+                                },
+                                onSelectOption = onSelectAssetOption,
+                            )
+                        }
                         FormTextFieldCard(
                             title = stringResource(R.string.deposit_form_amount_title),
                             hint = stringResource(R.string.send_amount_currency_hint),

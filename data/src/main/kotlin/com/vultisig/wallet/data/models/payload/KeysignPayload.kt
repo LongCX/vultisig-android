@@ -6,6 +6,7 @@ import java.math.BigInteger
 
 data class KeysignPayload(
     val coin: Coin,
+    val coinTrade: Coin? = null,
     val toAddress: String,
     val toAmount: BigInteger,
     val blockChainSpecific: BlockChainSpecific,

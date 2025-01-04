@@ -166,6 +166,7 @@ internal class KeysignShareViewModel @Inject constructor(
 
             val pubKeyECDSA = vault.pubKeyECDSA
             val srcToken = transaction.srcToken
+            val srcTokenTrade = transaction.srcTokenTrade
 
             val specific = transaction.blockChainSpecific
 
@@ -174,6 +175,7 @@ internal class KeysignShareViewModel @Inject constructor(
             customMessagePayload = null
             keysignPayload = KeysignPayload(
                 coin = srcToken,
+                coinTrade = srcTokenTrade,
                 toAddress = transaction.dstAddress,
                 toAmount = transaction.srcTokenValue.value,
                 blockChainSpecific = specific,

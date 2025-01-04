@@ -7,6 +7,7 @@ data class DepositTransaction(
     val vaultId: String,
 
     val srcToken: Coin,
+    val srcTokenTrade: Coin? = null,
     val srcAddress: String,
     val srcTokenValue: TokenValue,
     val memo: String,
