@@ -102,11 +102,6 @@ class ThorChainHelper(
         val memo = keysignPayload.memo
 
         val msgSend = if (isDeposit) {
-            val symbolCoin = if (keysignPayload.coinTrade?.contractAddress.isNullOrEmpty()) {
-                keysignPayload.coinTrade?.ticker
-            } else {
-                "${keysignPayload.coinTrade?.ticker}-${keysignPayload.coinTrade?.contractAddress?.takeLast(6)?.uppercase()}"
-            }
             val coin = Cosmos.THORChainCoin.newBuilder()
                 .setAsset(
                     Cosmos.THORChainAsset.newBuilder()
@@ -116,6 +111,11 @@ class ThorChainHelper(
                                 setSymbol(keysignPayload.coin.ticker)
                                 setTicker(keysignPayload.coin.ticker)
                             } else {
+                                val symbolCoin = if (keysignPayload.coinTrade.contractAddress.isEmpty()) {
+                                    keysignPayload.coinTrade.ticker
+                                } else {
+                                    "${keysignPayload.coinTrade.ticker}-${keysignPayload.coinTrade.contractAddress}"
+                                }
                                 setChain(keysignPayload.coinTrade.chain.swapAssetName())
                                 setSymbol(symbolCoin)
                                 setTicker(keysignPayload.coinTrade.ticker)

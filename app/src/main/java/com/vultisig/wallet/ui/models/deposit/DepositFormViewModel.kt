@@ -51,10 +51,12 @@ internal enum class DepositOption {
 }
 
 internal enum class AssetOption {
-    ETHUSDC,
     BTC,
+    ETHUSDC,
+    BASEUSDC,
     AVAXUSDC,
     RUNE,
+    CACAO,
 }
 
 internal enum class DepositChain {
@@ -704,15 +706,17 @@ internal class DepositFormViewModel @Inject constructor(
         var assetTrade: Coin
 
         when (assetOptionForTrade) {
-            "ETHUSDC" -> assetTrade = Coins.SupportedCoins.first { it.contractAddress == "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48" }
             "BTC" -> assetTrade = Coins.SupportedCoins.first { it.chain == Chain.Bitcoin }
+            "ETHUSDC" -> assetTrade = Coins.SupportedCoins.first { it.contractAddress == "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48" }
+            "BASEUSDC" -> assetTrade = Coins.SupportedCoins.first { it.contractAddress == "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913" }
             "AVAXUSDC" -> assetTrade = Coins.SupportedCoins.first { it.contractAddress == "0xb97ef9ef8734c71904d8002f8b6bc66dd9c48a6e" }
+            "CACAO" -> assetTrade = Coins.SupportedCoins.first { it.chain == Chain.MayaChain }
             else -> assetTrade = Coins.SupportedCoins.first { it.chain == Chain.ThorChain }
         }
 
         val tokenAmountInt =
             tokenAmount
-                .movePointRight(assetTrade.decimal)
+                .movePointRight(selectedToken.decimal)
                 .toBigInteger()
 
         val specific = blockChainSpecificRepository
@@ -738,7 +742,7 @@ internal class DepositFormViewModel @Inject constructor(
             memo = memo.toString(),
             srcTokenValue = TokenValue(
                 value = tokenAmountInt,
-                token = assetTrade,
+                token = selectedToken,
             ),
             estimatedFees = gasFee,
             blockChainSpecific = specific.blockChainSpecific,

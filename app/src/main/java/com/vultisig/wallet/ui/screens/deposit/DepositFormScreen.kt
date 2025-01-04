@@ -192,7 +192,8 @@ internal fun DepositFormScreen(
                                 options = state.assetOptions,
                                 mapTypeToString = {
                                     when (it) {
-                                        AssetOption.RUNE -> "THOR.RUNE (Not using trade asset)"
+                                        AssetOption.RUNE -> "ThorChain-RUNE (Only deposit)"
+                                        AssetOption.CACAO -> "MayaChain-CACAO (Only deposit)"
                                         else -> it.name
                                     }
                                 },
