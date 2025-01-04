@@ -111,10 +111,10 @@ class ThorChainHelper(
                 .setAsset(
                     Cosmos.THORChainAsset.newBuilder()
                         .apply {
-                            if (keysignPayload.coinTrade == null || keysignPayload.coinTrade.ticker == "RUNE" || !isValidMemoTradeAsset(keysignPayload.memo)) {
+                            if (keysignPayload.coinTrade == null || keysignPayload.coinTrade.ticker == "RUNE" || keysignPayload.coin.ticker == "CACAO" || !isValidMemoTradeAsset(keysignPayload.memo)) {
                                 setChain(chainName)
-                                setSymbol(ticker)
-                                setTicker(ticker)
+                                setSymbol(keysignPayload.coin.ticker)
+                                setTicker(keysignPayload.coin.ticker)
                             } else {
                                 setChain(keysignPayload.coinTrade.chain.swapAssetName())
                                 setSymbol(symbolCoin)
