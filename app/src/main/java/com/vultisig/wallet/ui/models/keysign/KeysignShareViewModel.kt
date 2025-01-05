@@ -77,6 +77,7 @@ internal class KeysignShareViewModel @Inject constructor(
             customMessagePayload = null
             keysignPayload = KeysignPayload(
                 coin = coin,
+                coinTrade = null,
                 toAddress = transaction.dstAddress,
                 toAmount = transaction.tokenValue.value,
                 blockChainSpecific = transaction.blockChainSpecific,
@@ -132,6 +133,7 @@ internal class KeysignShareViewModel @Inject constructor(
 
                     KeysignPayload(
                         coin = srcToken,
+                        coinTrade = null,
                         toAddress = transaction.dstAddress,
                         toAmount = transaction.srcTokenValue.value,
                         blockChainSpecific = specific.blockChainSpecific,

@@ -603,6 +603,7 @@ internal class SendFormViewModel @Inject constructor(
 
         val keysignPayload = KeysignPayload(
             coin = selectedToken,
+            coinTrade = null,
             toAddress = dstAddress,
             toAmount = tokenAmountInt,
             blockChainSpecific = specific.blockChainSpecific,
