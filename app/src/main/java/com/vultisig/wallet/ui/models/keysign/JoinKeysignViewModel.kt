@@ -369,7 +369,7 @@ internal class JoinKeysignViewModel @Inject constructor(
         val currency = appCurrencyRepository.currency.first()
 
         when {
-            swapPayload != null -> {
+            swapPayload != null && swapPayload.dstToken.chain != Chain.Dydx -> {
                 val srcToken = swapPayload.srcToken
                 val dstToken = swapPayload.dstToken
 

@@ -27,6 +27,7 @@ import androidx.lifecycle.asFlow
 import com.vultisig.wallet.R
 import com.vultisig.wallet.app.activity.MainActivity
 import com.vultisig.wallet.data.common.Utils
+import com.vultisig.wallet.data.models.Chain
 import com.vultisig.wallet.ui.components.KeepScreenOn
 import com.vultisig.wallet.ui.components.MultiColorButton
 import com.vultisig.wallet.ui.models.keysign.KeysignFlowState
@@ -53,7 +54,7 @@ internal fun KeysignPeerDiscovery(
     val vault = sharedViewModel.vault ?: return
     val keysignPayload = sharedViewModel.keysignPayload
     val customMessagePayload = sharedViewModel.customMessagePayload
-    val isSwap = sharedViewModel.keysignPayload?.swapPayload != null
+    val isSwap = sharedViewModel.keysignPayload?.swapPayload != null && sharedViewModel.keysignPayload!!.swapPayload?.dstToken?.chain != Chain.Dydx
     val amount by sharedViewModel.amount.collectAsState()
     val toAmount by sharedViewModel.toAmount.collectAsState()
     val bitmapPainter by sharedViewModel.qrBitmapPainter.collectAsState()
