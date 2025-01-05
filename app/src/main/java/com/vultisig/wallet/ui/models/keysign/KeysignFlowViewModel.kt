@@ -310,6 +310,7 @@ internal class KeysignFlowViewModel @Inject constructor(
             val specific = keysignPayload.blockChainSpecific
             KeysignPayloadProto(
                 coin = keysignPayload.coin.toCoinProto(),
+                coinTrade = keysignPayload.coinTrade?.toCoinProto(),
                 toAddress = keysignPayload.toAddress,
                 toAmount = keysignPayload.toAmount.toString(),
                 memo = keysignPayload.memo,

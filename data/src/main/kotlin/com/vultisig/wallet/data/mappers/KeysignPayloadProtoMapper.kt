@@ -31,6 +31,7 @@ internal class KeysignPayloadProtoMapperImpl @Inject constructor() : KeysignPayl
             toAmount = BigInteger(from.toAmount),
             memo = from.memo,
             coin = requireNotNull(from.coin).toCoin(),
+            coinTrade = (from.coinTrade)?.toCoin(),
             utxos = from.utxoInfo
                 .asSequence()
                 .filterNotNull()

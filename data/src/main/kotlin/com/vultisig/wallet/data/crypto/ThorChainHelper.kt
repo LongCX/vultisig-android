@@ -114,7 +114,7 @@ class ThorChainHelper(
                                 val symbolCoin = if (keysignPayload.coinTrade.contractAddress.isEmpty()) {
                                     keysignPayload.coinTrade.ticker
                                 } else {
-                                    "${keysignPayload.coinTrade.ticker}-${keysignPayload.coinTrade.contractAddress}"
+                                    "${keysignPayload.coinTrade.ticker}-${keysignPayload.coinTrade.contractAddress.uppercase()}"
                                 }
                                 setChain(keysignPayload.coinTrade.chain.swapAssetName())
                                 setSymbol(symbolCoin)
