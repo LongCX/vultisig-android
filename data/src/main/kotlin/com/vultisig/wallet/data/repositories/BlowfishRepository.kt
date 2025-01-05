@@ -62,7 +62,6 @@ internal class BlowfishRepositoryImpl @Inject constructor(
 
         val keysignPayload = KeysignPayload(
             coin = coin,
-            coinTrade = null,
             toAddress = transaction.dstAddress,
             toAmount = transaction.tokenValue.value,
             blockChainSpecific = transaction.blockChainSpecific,

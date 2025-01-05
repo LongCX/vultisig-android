@@ -10,7 +10,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.vultisig.wallet.data.models.Chain
 import com.vultisig.wallet.data.models.Coin
+import com.vultisig.wallet.data.models.Coins
 import com.vultisig.wallet.data.models.SwapTransaction
+import com.vultisig.wallet.data.models.THORChainSwapPayload
 import com.vultisig.wallet.data.models.TransactionId
 import com.vultisig.wallet.data.models.Vault
 import com.vultisig.wallet.data.models.payload.ERC20ApprovePayload
@@ -35,6 +37,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import vultisig.keysign.v1.CustomMessagePayload
+import java.math.BigDecimal
+import java.math.BigInteger
 import javax.inject.Inject
 
 @HiltViewModel
@@ -77,7 +81,6 @@ internal class KeysignShareViewModel @Inject constructor(
             customMessagePayload = null
             keysignPayload = KeysignPayload(
                 coin = coin,
-                coinTrade = null,
                 toAddress = transaction.dstAddress,
                 toAmount = transaction.tokenValue.value,
                 blockChainSpecific = transaction.blockChainSpecific,
@@ -133,7 +136,6 @@ internal class KeysignShareViewModel @Inject constructor(
 
                     KeysignPayload(
                         coin = srcToken,
-                        coinTrade = null,
                         toAddress = transaction.dstAddress,
                         toAmount = transaction.srcTokenValue.value,
                         blockChainSpecific = specific.blockChainSpecific,
@@ -169,6 +171,24 @@ internal class KeysignShareViewModel @Inject constructor(
             val pubKeyECDSA = vault.pubKeyECDSA
             val srcToken = transaction.srcToken
             val srcTokenTrade = transaction.srcTokenTrade
+            val swapPayload: SwapPayload? = if (srcTokenTrade != null && (srcTokenTrade.chain.id != "THOR" || srcTokenTrade.chain.id != "MAYA")) {
+                SwapPayload.ThorChain(
+                    THORChainSwapPayload(
+                        fromAddress = "",
+                        fromCoin = srcTokenTrade, // Only this field is using, other fake data
+                        toCoin = Coins.SupportedCoins.first { it.chain == Chain.ThorChain },
+                        vaultAddress = "",
+                        routerAddress = null,
+                        fromAmount = BigInteger.ZERO,
+                        toAmountDecimal = BigDecimal.ZERO,
+                        toAmountLimit = "0",
+                        streamingInterval = "1",
+                        streamingQuantity = "0",
+                        expirationTime = System.currentTimeMillis().toULong(),
+                        isAffiliate = false,
+                    )
+                )
+            } else null
 
             val specific = transaction.blockChainSpecific
 
@@ -177,7 +197,6 @@ internal class KeysignShareViewModel @Inject constructor(
             customMessagePayload = null
             keysignPayload = KeysignPayload(
                 coin = srcToken,
-                coinTrade = srcTokenTrade,
                 toAddress = transaction.dstAddress,
                 toAmount = transaction.srcTokenValue.value,
                 blockChainSpecific = specific,
@@ -185,6 +204,7 @@ internal class KeysignShareViewModel @Inject constructor(
                 utxos = emptyList(),
                 vaultLocalPartyID = vault.localPartyID,
                 memo = transaction.memo,
+                swapPayload = swapPayload,
             )
         }
     }

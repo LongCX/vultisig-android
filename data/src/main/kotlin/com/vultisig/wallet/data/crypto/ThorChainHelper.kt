@@ -106,19 +106,19 @@ class ThorChainHelper(
                 .setAsset(
                     Cosmos.THORChainAsset.newBuilder()
                         .apply {
-                            if (keysignPayload.coinTrade == null || keysignPayload.coinTrade.ticker == "RUNE" || keysignPayload.coin.ticker == "CACAO" || !isValidMemoTradeAsset(keysignPayload.memo)) {
+                            if (keysignPayload.swapPayload == null || keysignPayload.swapPayload.srcToken.ticker == "RUNE" || keysignPayload.swapPayload.srcToken.ticker == "CACAO" || !isValidMemoTradeAsset(keysignPayload.memo)) {
                                 setChain(chainName)
                                 setSymbol(keysignPayload.coin.ticker)
                                 setTicker(keysignPayload.coin.ticker)
                             } else {
-                                val symbolCoin = if (keysignPayload.coinTrade.contractAddress.isEmpty()) {
-                                    keysignPayload.coinTrade.ticker
+                                val symbolCoin = if (keysignPayload.swapPayload.srcToken.contractAddress.isEmpty()) {
+                                    keysignPayload.swapPayload.srcToken.ticker
                                 } else {
-                                    "${keysignPayload.coinTrade.ticker}-${keysignPayload.coinTrade.contractAddress.uppercase()}"
+                                    "${keysignPayload.swapPayload.srcToken.ticker}-${keysignPayload.swapPayload.srcToken.contractAddress.uppercase()}"
                                 }
-                                setChain(keysignPayload.coinTrade.chain.swapAssetName())
+                                setChain(keysignPayload.swapPayload.srcToken.chain.swapAssetName())
                                 setSymbol(symbolCoin)
-                                setTicker(keysignPayload.coinTrade.ticker)
+                                setTicker(keysignPayload.swapPayload.srcToken.ticker)
                                 setTrade(true)
                             }
                         }
