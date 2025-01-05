@@ -10,6 +10,7 @@ import com.vultisig.wallet.data.models.Chain
 import com.vultisig.wallet.data.models.SignedTransactionResult
 import com.vultisig.wallet.data.models.Vault
 import com.vultisig.wallet.data.models.coinType
+import com.vultisig.wallet.data.models.payload.BlockChainSpecific
 import com.vultisig.wallet.data.models.payload.KeysignPayload
 import com.vultisig.wallet.data.models.payload.SwapPayload
 import com.vultisig.wallet.data.wallet.OneInchSwap
@@ -43,7 +44,12 @@ object SigningHelper {
         }
 
         val swapPayload = payload.swapPayload
-        if (swapPayload != null && swapPayload !is SwapPayload.MayaChain) {
+        val specific = payload.blockChainSpecific
+        var isDeposit = false
+        if (specific is BlockChainSpecific.THORChain) {
+            isDeposit = specific.isDeposit
+        }
+        if (swapPayload != null && swapPayload !is SwapPayload.MayaChain && !isDeposit) {
             when (swapPayload) {
                 is SwapPayload.ThorChain -> {
                     messages += THORChainSwaps(vault.pubKeyECDSA, vault.hexChainCode)

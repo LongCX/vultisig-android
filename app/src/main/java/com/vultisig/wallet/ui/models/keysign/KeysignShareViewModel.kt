@@ -171,12 +171,14 @@ internal class KeysignShareViewModel @Inject constructor(
             val pubKeyECDSA = vault.pubKeyECDSA
             val srcToken = transaction.srcToken
             val srcTokenTrade = transaction.srcTokenTrade
-            val swapPayload: SwapPayload? = if (srcTokenTrade != null && (srcTokenTrade.chain.id != "THOR" || srcTokenTrade.chain.id != "MAYA")) {
+            val swapPayload: SwapPayload? = if (srcTokenTrade == null || srcTokenTrade.chain == Chain.ThorChain || srcTokenTrade.chain == Chain.MayaChain) {
+                null
+            } else {
                 SwapPayload.ThorChain(
                     THORChainSwapPayload(
                         fromAddress = "",
                         fromCoin = srcTokenTrade, // Only this field is using, other fake data
-                        toCoin = Coins.SupportedCoins.first { it.chain == Chain.ThorChain },
+                        toCoin = srcTokenTrade,
                         vaultAddress = "",
                         routerAddress = null,
                         fromAmount = BigInteger.ZERO,
@@ -188,7 +190,7 @@ internal class KeysignShareViewModel @Inject constructor(
                         isAffiliate = false,
                     )
                 )
-            } else null
+            }
 
             val specific = transaction.blockChainSpecific
 

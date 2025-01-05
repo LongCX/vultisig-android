@@ -106,7 +106,7 @@ class ThorChainHelper(
                 .setAsset(
                     Cosmos.THORChainAsset.newBuilder()
                         .apply {
-                            if (keysignPayload.swapPayload == null || keysignPayload.swapPayload.srcToken.ticker == "RUNE" || keysignPayload.swapPayload.srcToken.ticker == "CACAO" || !isValidMemoTradeAsset(keysignPayload.memo)) {
+                            if (keysignPayload.swapPayload == null || !isValidMemoTradeAsset(keysignPayload.memo)) {
                                 setChain(chainName)
                                 setSymbol(keysignPayload.coin.ticker)
                                 setTicker(keysignPayload.coin.ticker)
