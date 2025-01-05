@@ -44,12 +44,7 @@ object SigningHelper {
         }
 
         val swapPayload = payload.swapPayload
-        val specific = payload.blockChainSpecific
-        var isDeposit = false
-        if (specific is BlockChainSpecific.THORChain) {
-            isDeposit = specific.isDeposit
-        }
-        if (swapPayload != null && swapPayload !is SwapPayload.MayaChain && !isDeposit) {
+        if (swapPayload != null && swapPayload !is SwapPayload.MayaChain && swapPayload.dstToken.chain != Chain.Dydx) {
             when (swapPayload) {
                 is SwapPayload.ThorChain -> {
                     messages += THORChainSwaps(vault.pubKeyECDSA, vault.hexChainCode)
@@ -151,7 +146,7 @@ object SigningHelper {
     ): SignedTransactionResult {
         val swapPayload = keysignPayload.swapPayload
 
-        if (swapPayload != null && swapPayload !is SwapPayload.MayaChain) {
+        if (swapPayload != null && swapPayload !is SwapPayload.MayaChain && swapPayload.dstToken.chain != Chain.Dydx) {
             when (swapPayload) {
                 is SwapPayload.ThorChain -> {
                     return THORChainSwaps(vault.pubKeyECDSA, vault.hexChainCode)

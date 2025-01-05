@@ -28,6 +28,7 @@ import com.vultisig.wallet.data.common.Endpoints
 import com.vultisig.wallet.data.common.Endpoints.LOCAL_MEDIATOR_SERVER_URL
 import com.vultisig.wallet.data.common.Utils
 import com.vultisig.wallet.data.mediator.MediatorService
+import com.vultisig.wallet.data.models.Chain
 import com.vultisig.wallet.data.models.Coin
 import com.vultisig.wallet.data.models.TssKeyType
 import com.vultisig.wallet.data.models.TssKeysignType
@@ -470,7 +471,7 @@ internal class KeysignFlowViewModel @Inject constructor(
     ) {
         if (keysignPayload != null) {
             transactionId?.let {
-                val isSwap = keysignPayload.swapPayload != null
+                val isSwap = (keysignPayload.swapPayload != null && keysignPayload.swapPayload!!.dstToken.chain != Chain.Dydx)
                 val isDeposit = when (val specific = keysignPayload.blockChainSpecific) {
                     is BlockChainSpecific.MayaChain -> specific.isDeposit
                     is BlockChainSpecific.THORChain -> specific.isDeposit

@@ -177,8 +177,8 @@ internal class KeysignShareViewModel @Inject constructor(
                 SwapPayload.ThorChain(
                     THORChainSwapPayload(
                         fromAddress = "",
-                        fromCoin = srcTokenTrade, // Only this field is using, other fake data
-                        toCoin = srcTokenTrade,
+                        fromCoin = srcTokenTrade, // Asset source for trade
+                        toCoin = Coins.SupportedCoins.first { it.chain == Chain.Dydx }, // Fake data hard-code for judgment trade asset
                         vaultAddress = "",
                         routerAddress = null,
                         fromAmount = BigInteger.ZERO,
