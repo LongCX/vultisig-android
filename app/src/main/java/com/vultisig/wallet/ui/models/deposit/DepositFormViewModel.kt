@@ -52,6 +52,10 @@ internal enum class DepositOption {
 
 internal enum class AssetOption {
     BTC,
+    ETH,
+    AVAX,
+    BCH,
+    LTC,
     ETHUSDC,
     BASEUSDC,
     AVAXUSDC,
@@ -710,6 +714,10 @@ internal class DepositFormViewModel @Inject constructor(
 
         when (assetOptionForTrade) {
             "BTC" -> assetTrade = Coins.SupportedCoins.first { it.chain == Chain.Bitcoin }
+            "ETH" -> assetTrade = Coins.SupportedCoins.first { it.chain == Chain.Ethereum && it.ticker == "ETH" }
+            "AVAX" -> assetTrade = Coins.SupportedCoins.first { it.chain == Chain.Avalanche && it.ticker == "AVAX" }
+            "BCH" -> assetTrade = Coins.SupportedCoins.first { it.chain == Chain.BitcoinCash }
+            "LTC" -> assetTrade = Coins.SupportedCoins.first { it.chain == Chain.Litecoin }
             "ETHUSDC" -> assetTrade = Coins.SupportedCoins.first { it.contractAddress == "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48" }
             "BASEUSDC" -> assetTrade = Coins.SupportedCoins.first { it.contractAddress == "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913" }
             "AVAXUSDC" -> assetTrade = Coins.SupportedCoins.first { it.contractAddress == "0xb97ef9ef8734c71904d8002f8b6bc66dd9c48a6e" }
