@@ -189,6 +189,7 @@ internal class KeysignFlowViewModel @Inject constructor(
             featureFlagApi = featureFlagApi,
             transactionTypeUiModel = transactionTypeUiModel,
             pullTssMessages = pullTssMessages,
+            isInitiatingDevice = true,
         )
 
     init {

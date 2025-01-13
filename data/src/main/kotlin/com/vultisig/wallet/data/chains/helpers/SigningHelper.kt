@@ -52,8 +52,20 @@ object SigningHelper {
                 }
 
                 is SwapPayload.OneInch -> {
-                    messages += OneInchSwap(vault.pubKeyECDSA, vault.hexChainCode)
-                        .getPreSignedImageHash(swapPayload.data, payload, nonceAcc)
+                    val message = if (payload.coin.chain == Chain.Solana) {
+                        SolanaSwap(vault.pubKeyEDDSA)
+                            .getPreSignedImageHash(
+                                swapPayload.data,
+                                payload
+                            )
+                    } else OneInchSwap(vault.pubKeyECDSA, vault.hexChainCode)
+                        .getPreSignedImageHash(
+                            swapPayload.data,
+                            payload,
+                            nonceAcc
+                        )
+
+                    messages += message
                 }
                 // mayachain is implemented through send transaction
                 else -> Unit
@@ -159,7 +171,12 @@ object SigningHelper {
                 }
 
                 is SwapPayload.OneInch -> {
-                    return OneInchSwap(vault.pubKeyECDSA, vault.hexChainCode)
+                    return if (keysignPayload.blockChainSpecific is BlockChainSpecific.Solana)
+                        SolanaSwap(vault.pubKeyEDDSA)
+                            .getSignedTransaction(
+                                swapPayload.data, keysignPayload, signatures
+                            )
+                    else OneInchSwap(vault.pubKeyECDSA, vault.hexChainCode)
                         .getSignedTransaction(
                             swapPayload.data,
                             keysignPayload,

@@ -27,6 +27,7 @@ import com.vultisig.wallet.data.repositories.AllowanceRepository
 import com.vultisig.wallet.data.repositories.AppCurrencyRepository
 import com.vultisig.wallet.data.repositories.BlockChainSpecificRepository
 import com.vultisig.wallet.data.repositories.GasFeeRepository
+import com.vultisig.wallet.data.repositories.RefreshQuoteUiRepository
 import com.vultisig.wallet.data.repositories.RequestResultRepository
 import com.vultisig.wallet.data.repositories.SwapQuoteRepository
 import com.vultisig.wallet.data.repositories.SwapTransactionRepository
@@ -109,6 +110,7 @@ internal class SwapFormViewModel @Inject constructor(
     private val tokenRepository: TokenRepository,
     private val requestResultRepository: RequestResultRepository,
     private val gasFeeToEstimatedFee: GasFeeToEstimatedFeeUseCase,
+    private val refreshQuoteUiRepository: RefreshQuoteUiRepository,
 ) : ViewModel() {
 
     val uiState = MutableStateFlow(SwapFormUiModel())
@@ -611,6 +613,9 @@ internal class SwapFormViewModel @Inject constructor(
                 .combine(srcAmountState.textAsFlow()) { address, amount ->
                     address to srcAmount
                 }
+                .combine(refreshQuoteUiRepository.refreshValue) { (address, amount), _ ->
+                    address to amount
+                }
                 .collect { (address, amount) ->
                     isLoading = true
                     val (src, dst) = address
@@ -693,7 +698,7 @@ internal class SwapFormViewModel @Inject constructor(
                                     mapTokenValueToDecimalUiString(recommendedMinAmountToken)
                                 amount?.let {
                                     uiState.update {
-                                        if (amount < recommendedMinAmountTokenString.toBigDecimal()) {
+                                        if (amount < recommendedMinAmountToken.decimal) {
                                             it.copy(
                                                 minimumAmount = recommendedMinAmountTokenString,
                                                 isSwapDisabled = true
@@ -804,14 +809,20 @@ internal class SwapFormViewModel @Inject constructor(
                                 }
                             }
 
-                            SwapProvider.LIFI -> {
-                                val quote = swapQuoteRepository.getLiFiSwapQuote(
-                                    srcAddress = src.address.address,
-                                    dstAddress = dst.address.address,
-                                    srcToken = srcToken,
-                                    dstToken = dstToken,
-                                    tokenValue = tokenValue,
-                                )
+                            SwapProvider.LIFI, SwapProvider.JUPITER -> {
+                                val quote =
+                                    if (provider == SwapProvider.LIFI) swapQuoteRepository.getLiFiSwapQuote(
+                                        srcAddress = src.address.address,
+                                        dstAddress = dst.address.address,
+                                        srcToken = srcToken,
+                                        dstToken = dstToken,
+                                        tokenValue = tokenValue,
+                                    ) else swapQuoteRepository.getJupiterSwapQuote(
+                                        srcAddress = src.address.address,
+                                        srcToken = srcToken,
+                                        dstToken = dstToken,
+                                        tokenValue = tokenValue
+                                    )
 
                                 val expectedDstValue = TokenValue(
                                     value = quote.dstAmount.toBigInteger(),
@@ -843,7 +854,11 @@ internal class SwapFormViewModel @Inject constructor(
 
                                 uiState.update {
                                     it.copy(
-                                        provider = R.string.swap_for_provider_li_fi.asUiText(),
+                                        provider = if (provider == SwapProvider.LIFI) {
+                                            R.string.swap_for_provider_li_fi.asUiText()
+                                        } else {
+                                            R.string.swap_for_provider_jupiter.asUiText()
+                                        },
                                         srcFiatValue = srcFiatValueText,
                                         estimatedDstTokenValue = estimatedDstTokenValue,
                                         estimatedDstFiatValue = fiatValueToString.map(
