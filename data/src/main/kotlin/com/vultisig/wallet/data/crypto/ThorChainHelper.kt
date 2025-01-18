@@ -205,6 +205,7 @@ class ThorChainHelper(
         val preHashes = TransactionCompiler.preImageHashes(coinType, inputData)
         val preSigningOutput =
             wallet.core.jni.proto.TransactionCompiler.PreSigningOutput.parseFrom(preHashes)
+                .checkError()
         val allSignatures = DataVector()
         val allPublicKeys = DataVector()
         val key = Numeric.toHexStringNoPrefix(preSigningOutput.dataHash.toByteArray())
@@ -223,6 +224,7 @@ class ThorChainHelper(
             allPublicKeys
         )
         val output = Cosmos.SigningOutput.parseFrom(compileWithSignature)
+            .checkError()
         val cosmosSig = Json.decodeFromString<CosmoSignature>(output.serialized)
         return SignedTransactionResult(
             output.serialized,
