@@ -184,7 +184,8 @@ internal fun DepositFormScreen(
 
                 else -> {
                     if (depositOption != DepositOption.Leave && depositChain == DepositChain.Thor ||
-                        depositOption == DepositOption.Custom && depositChain == DepositChain.Maya
+                        depositOption == DepositOption.Custom && depositChain == DepositChain.Maya ||
+                        depositOption == DepositOption.Unstake || depositOption == DepositOption.Stake
                     ) {
                         if (depositOption == DepositOption.Custom) {
                             FormSelection(
@@ -232,11 +233,6 @@ internal fun DepositFormScreen(
                             )
 
                             UiSpacer(size = 8.dp)
-//                UiIcon(
-//                    drawableResId = R.drawable.camera,
-//                    size = 20.dp,
-//                    onClick = onScan,
-//                )
                         }
                     }
 
@@ -262,11 +258,6 @@ internal fun DepositFormScreen(
                             )
 
                             UiSpacer(size = 8.dp)
-//                UiIcon(
-//                    drawableResId = R.drawable.camera,
-//                    size = 20.dp,
-//                    onClick = onScan,
-//                )
                         }
 
                         if (depositChain == DepositChain.Maya) {
